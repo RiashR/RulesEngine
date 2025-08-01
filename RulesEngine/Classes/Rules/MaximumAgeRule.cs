@@ -13,12 +13,11 @@ namespace RulesEngine.Classes.Rules
             {
                 return new Result 
                 { 
-                    IsSuccessful = false, 
-                    Message = $"Applicant age exceeds maximum allowed ({MaxAge})."
+                    IsSuccessful = true, 
                 };
             }
 
-            return new Result { IsSuccessful = true };
+            return new Result { IsSuccessful = false };
         }
     }
 }

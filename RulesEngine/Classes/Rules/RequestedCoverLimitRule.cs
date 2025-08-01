@@ -6,18 +6,7 @@ namespace RulesEngine.Classes.Rules
     {
         private const decimal MaxRequestedCover = 500000m;
 
-        public Result Evaluate(UnderwritingInput input)
-        {
-            if (input.RequestedCover > MaxRequestedCover)
-            {
-                return new Result
-                {
-                    IsSuccessful = false,
-                    Message = $"Requested cover exceeds the maximum allowed ({MaxRequestedCover:C})."
-                };
-            }
-
-            return new Result { IsSuccessful = true };
-        }
+        public Result Evaluate(UnderwritingInput input) =>
+            new() { IsSuccessful = input.RequestedCover >= MaxRequestedCover };
     }
 }

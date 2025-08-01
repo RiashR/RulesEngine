@@ -1,4 +1,5 @@
-﻿using RulesEngine.Classes;
+﻿using Microsoft.Extensions.DependencyInjection;
+using RulesEngine.Classes;
 using RulesEngine.Classes.Rules;
 using RulesEngine.Interfaces;
 
@@ -8,30 +9,48 @@ namespace RulesEngine
     {
         static void Main(string[] args)
         {
-            var input = new UnderwritingInput
+            var services = new ServiceCollection();
+
+            services.AddScoped<IRule<UnderwritingInput>, AgeUnder25Rule>();
+            services.AddScoped<IRule<UnderwritingInput>, SmokerRule>();
+            services.AddScoped<IRule<UnderwritingInput>, MaximumAgeRule>();
+            services.AddScoped<IRule<UnderwritingInput>, MinimumIncomeRule>();
+            services.AddScoped<IRule<UnderwritingInput>, RequestedCoverLimitRule>();
+
+            services.AddScoped<PolicyTierEvaluator<UnderwritingInput>>();
+
+            var provider = services.BuildServiceProvider();
+
+            var applicants = new[]
             {
-                Age = 22,
-                IsSmoker = true,
-                Income = 30000,
-                RequestedCover = 250000
+                new UnderwritingInput { Age = 22, IsSmoker = false, Income = 30000, RequestedCover = 400000 },
+                new UnderwritingInput { Age = 65, IsSmoker = false, Income = 30000, RequestedCover = 400000 },
+                new UnderwritingInput { Age = 40, IsSmoker = false, Income = 30000, RequestedCover = 510000 },
             };
 
-            var rules = new List<IRule<UnderwritingInput>>
-            {
-                new SmokerRule(),
-                new AgeUnder25Rule(),
-                new MaximumAgeRule(),
-                new MinimumIncomeRule(),
-                new RequestedCoverLimitRule()
-            };
+            var index = 1;
+            var tiers = PolicyTierDefinitions.Tiers;
 
-            foreach (var rule in rules)
+            foreach (var applicant in applicants)
             {
-                var result = rule.Evaluate(input);
-                Console.WriteLine(result.IsSuccessful
-                    ? "Rule passed"
-                    : $"Rule failed: {result.Message}");
+                var policyTierEvaluator = provider.GetRequiredService<PolicyTierEvaluator<UnderwritingInput>>();
+                var qualifiedTier = policyTierEvaluator.EvaluateTier(applicant, tiers);
+
+                Console.WriteLine($"\n=== Applicant #{index++} ===");
+                Console.WriteLine($"Age: {applicant.Age}, Smoker: {applicant.IsSmoker}, Income: {applicant.Income}, Cover: {applicant.RequestedCover}");
+
+                if (qualifiedTier != null)
+                {
+                    Console.WriteLine($"Applicant qualifies for: {qualifiedTier.Name} (Premium: {qualifiedTier.Premium:C})");
+                }
+                else
+                {
+                    Console.WriteLine("Applicant does not qualify for any tier.");
+                }
+
+                Console.WriteLine(new string('-', 50));
             }
         }
     }
 }
+

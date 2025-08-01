@@ -6,18 +6,7 @@ namespace RulesEngine.Classes.Rules
     {
         private const decimal MinIncome = 25000m;
 
-        public Result Evaluate(UnderwritingInput input)
-        {
-            if (input.Income < MinIncome)
-            {
-                return new Result
-                {
-                    IsSuccessful = false,
-                    Message = $"Applicant income is below the minimum required ({MinIncome:C})."
-                };
-            }
-
-            return new Result { IsSuccessful = true };
-        }
+        public Result Evaluate(UnderwritingInput input) =>
+            new() { IsSuccessful = input.Income >= MinIncome };
     }
 }
