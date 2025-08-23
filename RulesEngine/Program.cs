@@ -2,6 +2,8 @@
 using RulesEngine.Classes;
 using RulesEngine.Classes.Rules;
 using RulesEngine.Interfaces;
+using System.Diagnostics;
+using System.Text.Json;
 
 namespace RulesEngine
 {
@@ -11,11 +13,15 @@ namespace RulesEngine
         {
             var services = new ServiceCollection();
 
-            services.AddScoped<IRule<UnderwritingInput>, AgeUnder25Rule>();
-            services.AddScoped<IRule<UnderwritingInput>, SmokerRule>();
-            services.AddScoped<IRule<UnderwritingInput>, MaximumAgeRule>();
-            services.AddScoped<IRule<UnderwritingInput>, MinimumIncomeRule>();
-            services.AddScoped<IRule<UnderwritingInput>, RequestedCoverLimitRule>();
+            // Load rules from JSON
+            var json = File.ReadAllText("Configuration/rules.json");
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var dynamicRules = JsonSerializer.Deserialize<List<DynamicRule>>(json, options);
+
+            if (dynamicRules != null)
+            {
+                services.AddSingleton<IEnumerable<IRule<UnderwritingInput>>>(dynamicRules);
+            }
 
             services.AddScoped<PolicyTierEvaluator<UnderwritingInput>>();
 
@@ -31,9 +37,11 @@ namespace RulesEngine
             var index = 1;
             var tiers = PolicyTierDefinitions.Tiers;
 
+            using var scope = provider.CreateScope();
+            var policyTierEvaluator = scope.ServiceProvider.GetRequiredService<PolicyTierEvaluator<UnderwritingInput>>();
+
             foreach (var applicant in applicants)
             {
-                var policyTierEvaluator = provider.GetRequiredService<PolicyTierEvaluator<UnderwritingInput>>();
                 var qualifiedTier = policyTierEvaluator.EvaluateTier(applicant, tiers);
 
                 Console.WriteLine($"\n=== Applicant #{index++} ===");

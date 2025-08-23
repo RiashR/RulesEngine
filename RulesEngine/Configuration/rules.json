@@ -1,0 +1,27 @@
+[
+	{
+		"field": "Age",
+		"operator": "<",
+		"value": 25
+	},
+	{
+		"field": "Age",
+		"operator": ">=",
+		"value": 65
+	},
+	{
+		"field": "Income",
+		"operator": "<",
+		"value": 10000
+	},
+	{
+		"field": "IsSmoker",
+		"operator": "==",
+		"value": true
+	},
+	{
+		"field": "RequestedCover",
+		"operator": ">",
+		"value": 500000
+	}
+]
